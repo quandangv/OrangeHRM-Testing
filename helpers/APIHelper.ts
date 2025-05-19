@@ -36,10 +36,14 @@ export default class APIHelper {
       { baseURL: this.baseURL, language, dateFormat }
     );
     if (
+      response.data == null ||
       response.data.language != language ||
       response.data.dateFormat != dateFormat
     )
-      throw Error("Set localization failed");
+      throw Error(
+        "Set localization failed. Received response: " +
+          JSON.stringify(response)
+      );
   }
   public async get(url: string) {
     return this.page.evaluate(async (url) => {

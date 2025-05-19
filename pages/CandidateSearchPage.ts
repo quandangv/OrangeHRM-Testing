@@ -64,10 +64,19 @@ export default class CandidateSearchPage extends RestrictedPage {
 
   public async goto(user = "Admin") {
     await this.loginAndGoto("/web/index.php/recruitment/viewCandidates", user);
+    await this.waitForRecords();
   }
 
   public setItems(candidates: CandidateDetails[]) {
     this.items = candidates.map((item) => new CandidateTags(item));
+  }
+
+  public async waitForRecords() {
+    await this.page
+      .getByText(/Record(?:s)? Found$/)
+      .first()
+      .waitFor();
+    await this.page.waitForTimeout(500);
   }
 
   /** Perform actions on the UI to search candidates and read the search results to an array of partial CandidateTags */
@@ -107,11 +116,7 @@ export default class CandidateSearchPage extends RestrictedPage {
       );
     this.page.getByRole("button", { name: "Search", exact: true }).click();
     await this.page.waitForTimeout(500);
-    await this.page
-      .getByText(/Record(?:s)? Found$/)
-      .first()
-      .waitFor();
-    await this.page.waitForTimeout(500);
+    await this.waitForRecords();
     const rowgroups = this.page.getByRole("rowgroup");
     const headings = (
       await rowgroups.first().getByRole("columnheader").all()

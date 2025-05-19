@@ -25,6 +25,7 @@ export default class LoginPage extends BasePage {
     await this.inputUsername.fill(username);
     await this.inputPassword.fill(password ?? LoginPage.credentials[username]);
     await this.loginButton.click();
+    await this.page.waitForURL(/\/web\/index.php\//);
   }
 
   public async apiLogout() {
