@@ -1,7 +1,7 @@
 import { expect } from "@playwright/test";
-import { test } from "../pages/fixtures";
-import DashboardPage from "../pages/DashboardPage";
-import LoginPage from "../pages/LoginPage";
+import { test } from "../helpers/fixtures";
+import DashboardPage from "../pages/dashboardPage";
+import LoginPage from "../pages/loginPage";
 
 // Test logging in with the correct credentials: log in successful
 test("log in", async ({ loginPage }) => {
