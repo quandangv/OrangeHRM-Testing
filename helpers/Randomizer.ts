@@ -48,7 +48,8 @@ export default class Randomizer {
    * @param iterations if null or equals to the list length, this shuffles the whole list. Otherwise, it randomly chooses that number of elements and swap them to the front
    */
   public static shuffle<T>(list: T[], iterations?: number) {
-    if (iterations == null) iterations = list.length;
+    if (iterations == null || iterations > list.length)
+      iterations = list.length;
     for (let i = 0; i < iterations - 1; i++) {
       const j = i + this.int(list.length - i);
       const temp = list[i];

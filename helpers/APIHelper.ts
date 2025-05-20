@@ -3,8 +3,21 @@ import BasePage from "../pages/BasePage";
 import {
   CandidateCreationData,
   CandidateCreationResults,
+  CandidateStatus,
 } from "../models/Candidate";
-import { VacancyCreationData, VacancyCreationResults } from "../models/Vacancy";
+import {
+  VacancyCreationData,
+  VacancyCreationResults,
+  VacancyItem,
+} from "../models/Vacancy";
+import {
+  JobTitleCreationData,
+  JobTitleCreationResults,
+  JobTitleItem,
+} from "../models/JobTitle";
+import { EmployeeItem } from "../models/Employee";
+
+export type DataPromise<T> = Promise<{ data: T; meta: any[]; rels: any[] }>;
 
 export default class APIHelper {
   private baseURL: string;
@@ -52,26 +65,26 @@ export default class APIHelper {
     }, this.baseURL + url);
   }
 
-  public async apiCreateVacancy(
-    data: VacancyCreationData
-  ): Promise<VacancyCreationResults> {
-    return this.page.evaluate(
-      async ([baseURL, data]) => {
-        const response = await fetch(
-          baseURL + "/web/index.php/api/v2/recruitment/vacancies",
-          {
-            method: "POST",
-            body: JSON.stringify(data),
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        return (await response.json()).data;
-      },
-      [this.baseURL, data] as [string, VacancyCreationData]
+  public async getJobTitles(): Promise<JobTitleItem[]> {
+    return this.get("/web/index.php/api/v2/admin/job-titles");
+  }
+
+  public async getEmployees(): Promise<EmployeeItem[]> {
+    return this.get(
+      "/web/index.php/api/v2/pim/employees?includeEmployees=onlyCurrent"
     );
+  }
+
+  public async getHiringManagers(): Promise<EmployeeItem[]> {
+    return this.get("/web/index.php/api/v2/recruitment/hiring-managers");
+  }
+
+  public async getVacancies(): Promise<VacancyItem[]> {
+    return this.get("/web/index.php/api/v2/recruitment/vacancies");
+  }
+
+  public async getStatuses(): Promise<CandidateStatus[]> {
+    return this.get("/web/index.php/api/v2/recruitment/candidates/statuses");
   }
 
   public async delete(url: string, ...ids: number[]) {
@@ -90,24 +103,39 @@ export default class APIHelper {
     );
   }
 
-  public async apiCreateCandidate(data: CandidateCreationData) {
+  public async create(path: string, data: unknown): Promise<any> {
     return this.page.evaluate(
-      async ([baseURL, data]) => {
-        const response = await fetch(
-          baseURL + "/web/index.php/api/v2/recruitment/candidates",
-          {
-            method: "POST",
-            body: JSON.stringify(data),
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-          }
-        );
+      async ([path, data]) => {
+        const response = await fetch(path, {
+          method: "POST",
+          body: JSON.stringify(data),
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        });
         return await response.json();
       },
-      [this.baseURL, data] as [string, CandidateCreationData]
+      [this.baseURL + path, data] as [string, unknown]
     );
+  }
+
+  public async createJobTitle(
+    data: JobTitleCreationData
+  ): DataPromise<JobTitleCreationResults> {
+    return this.create("/web/index.php/api/v2/admin/job-titles", data);
+  }
+
+  public async createVacancy(
+    data: VacancyCreationData
+  ): DataPromise<VacancyCreationResults> {
+    return this.create("/web/index.php/api/v2/recruitment/vacancies", data);
+  }
+
+  public async createCandidate(
+    data: CandidateCreationData
+  ): DataPromise<CandidateCreationResults> {
+    return this.create("/web/index.php/api/v2/recruitment/candidates", data);
   }
 
   public static getName(item: {

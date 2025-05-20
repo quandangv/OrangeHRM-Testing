@@ -1,4 +1,4 @@
-import { test as base, expect as baseExpect, expect } from "@playwright/test";
+import { test as base, expect } from "@playwright/test";
 import LoginPage from "./LoginPage";
 import DashboardPage from "./DashboardPage";
 import CandidateSearchPage from "./CandidateSearchPage";
@@ -7,8 +7,6 @@ import Randomizer from "../helpers/Randomizer";
 import { VacancyDetails } from "../models/Vacancy";
 import { CandidateDetails, CandidateStatus } from "../models/Candidate";
 import config from "../playwright.config";
-import { JobTitleItem } from "../models/JobTitle";
-import { EmployeeItem } from "../models/Employee";
 
 export const test = base.extend<
   {
@@ -19,10 +17,6 @@ export const test = base.extend<
   },
   {
     apiHelper: APIHelper;
-    jobTitles: JobTitleItem[];
-    employees: EmployeeItem[];
-    hiringManagers: EmployeeItem[];
-    statuses: CandidateStatus[];
     /** Creates some vacancies and returns an array of them. Deletes the created vacancies afterward */
     vacancies: VacancyDetails[];
     /** Creates some vacancies, candidates and returns an array of the candidates. Deletes the created entities afterward */
@@ -52,54 +46,16 @@ export const test = base.extend<
     },
     { scope: "worker" },
   ],
-  jobTitles: [
-    async ({ apiHelper }, use) => {
-      await use(
-        await apiHelper.get("/web/index.php/api/v2/admin/job-titles?limit=0")
-      );
-    },
-    { scope: "worker" },
-  ],
-  employees: [
-    async ({ apiHelper }, use) => {
-      await use(
-        await apiHelper.get(
-          "/web/index.php/api/v2/pim/employees?includeEmployees=onlyCurrent"
-        )
-      );
-    },
-    { scope: "worker" },
-  ],
-  hiringManagers: [
-    async ({ apiHelper }, use) => {
-      await use(
-        await apiHelper.get(
-          "/web/index.php/api/v2/recruitment/hiring-managers?limit=0"
-        )
-      );
-    },
-    { scope: "worker" },
-  ],
-  statuses: [
-    async ({ apiHelper }, use) => {
-      await use(
-        await apiHelper.get(
-          "/web/index.php/api/v2/recruitment/candidates/statuses"
-        )
-      );
-    },
-    { scope: "worker" },
-  ],
   vacancies: [
-    async ({ apiHelper, jobTitles, employees }, use) => {
+    async ({ apiHelper }, use) => {
       const result: VacancyDetails[] = [];
+      const employees = await apiHelper.getEmployees();
       // Select only a few employees to simulate hiring managers working on multiple vacancies
-      expect(employees.length).toBeGreaterThan(1);
-      const hiringManagerCount = 2;
-      const hiringManagers = [...employees];
-      Randomizer.shuffle(hiringManagers, hiringManagerCount);
-      hiringManagers.length = hiringManagerCount;
-      const vacancyCount = 4;
+      let hiringManagers = [...employees];
+      Randomizer.shuffle(hiringManagers, 2);
+      hiringManagers = hiringManagers.slice(0, 2);
+      const vacancyCount = 5;
+      const jobTitles = await apiHelper.getJobTitles();
       console.log("Created Vacancies:");
       for (let i = 0; i < vacancyCount; i++) {
         const chosenTitle = Randomizer.choose(jobTitles);
@@ -112,8 +68,10 @@ export const test = base.extend<
           numOfPositions: 1,
           status: true,
         };
-        console.log(JSON.stringify(vacancy));
-        result.push(await apiHelper.apiCreateVacancy(vacancy));
+        const response = await apiHelper.createVacancy(vacancy);
+        expect(response.data).not.toBeNull();
+        console.log(JSON.stringify(response.data));
+        result.push(response.data);
       }
       await use(result);
       await apiHelper.delete(
@@ -130,8 +88,9 @@ export const test = base.extend<
       const keywordSeeds = Randomizer.uniqueStrings(6, 6);
       const nameSeeds = Randomizer.uniqueStrings(6, candidateCount);
       console.log("Created Candidates:");
+      const vacancyPool = vacancies.slice(1);
       for (let i = 0; i < candidateCount; i++) {
-        const vacancy = Randomizer.choose(vacancies);
+        const vacancy = Randomizer.choose(vacancyPool);
         const candidate = {
           firstName: "firstName" + nameSeeds[i],
           middleName: "middleName" + Randomizer.str(3),
@@ -150,7 +109,7 @@ export const test = base.extend<
           consentToKeepData: false,
         };
         console.log(JSON.stringify(candidate));
-        const response = await apiHelper.apiCreateCandidate(candidate);
+        const response = await apiHelper.createCandidate(candidate);
         expect(response.data).not.toBeNull();
         result.push({
           ...candidate,
@@ -169,10 +128,21 @@ export const test = base.extend<
     },
     { scope: "worker" },
   ],
-  candidateSearch: async ({ page, candidates }, use) => {
+  candidateSearch: async ({ page, candidates, apiHelper }, use) => {
     const searchPage = new CandidateSearchPage(page);
+    // Create a job title without candidates for testing
+    const jobTitle = await apiHelper.createJobTitle({
+      title: Randomizer.str(8),
+      description: "description",
+      note: "",
+    });
+    console.log("Created job title: " + JSON.stringify(jobTitle.data));
     await searchPage.goto();
     searchPage.setItems(candidates);
     await use(searchPage);
+    await apiHelper.delete(
+      "/web/index.php/api/v2/admin/job-titles",
+      jobTitle.data.id
+    );
   },
 });

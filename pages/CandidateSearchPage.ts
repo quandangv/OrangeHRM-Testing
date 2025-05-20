@@ -33,15 +33,6 @@ export class CandidateTags {
   }
 }
 
-/** The expected columns in the search results */
-const searchResultColumns: (keyof CandidateTags)[] = [
-  "Date of Application",
-  "Vacancy",
-  "Candidate",
-  "Hiring Manager",
-  "Status",
-];
-
 /** Data model for the candidate filter */
 export interface CandidateFilter {
   jobTitle?: string;
@@ -57,6 +48,7 @@ export interface CandidateFilter {
 export default class CandidateSearchPage extends RestrictedPage {
   /** The candidates created for testing */
   public items: CandidateTags[] = [];
+  private headings: string[] = [];
 
   public get identifier() {
     return this.page.getByRole("heading", { name: "Candidates", exact: true });
@@ -95,7 +87,7 @@ export default class CandidateSearchPage extends RestrictedPage {
       );
       await this.page
         .getByRole("option", { name: filters.candidateName, exact: false })
-        .click();
+        .click({ timeout: 10000 });
     }
     if (filters.keywords != null)
       await this.getLabelledElement("Keywords", "//input").fill(
@@ -115,12 +107,16 @@ export default class CandidateSearchPage extends RestrictedPage {
         filters.methodOfApplication
       );
     this.page.getByRole("button", { name: "Search", exact: true }).click();
+  }
+  public async getSearchResults() {
     await this.page.waitForTimeout(500);
     await this.waitForRecords();
     const rowgroups = this.page.getByRole("rowgroup");
-    const headings = (
-      await rowgroups.first().getByRole("columnheader").all()
-    ).map((item) => item.innerText());
+    this.headings = await Promise.all(
+      (
+        await rowgroups.first().getByRole("columnheader").all()
+      ).map((item) => item.innerText())
+    );
     const rows = rowgroups.last().getByRole("row");
     return await Promise.all(
       (
@@ -129,7 +125,7 @@ export default class CandidateSearchPage extends RestrictedPage {
         const cells = await row.getByRole("cell").all();
         const result: Partial<CandidateTags> = {};
         for (let i = 0; i < cells.length; i++) {
-          const heading = await headings[i];
+          const heading = this.headings[i];
           if (heading != null) {
             result[heading] = await cells[i].textContent();
           }
@@ -180,15 +176,15 @@ export default class CandidateSearchPage extends RestrictedPage {
   }
 
   /** Returns a string table with only the data displayed in the search result */
-  public static makeTable(data: any[]) {
+  public makeTable(data: any[]) {
     return data
-      .map((row) => searchResultColumns.map((name) => row[name]).join(", "))
+      .map((row) => this.headings.map((name) => row[name]).join(", "))
       .sort()
       .join("\n");
   }
 
   /** Clear the search results of the items not created in the test */
-  public clearOtherItems(searchResults: Record<string, unknown>[]) {
+  public clearOtherItems<T>(searchResults: Record<string, T>[]) {
     return searchResults.filter((result) =>
       this.items.find((item) => item.Candidate == result.Candidate)
     );

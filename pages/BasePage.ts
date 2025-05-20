@@ -33,6 +33,20 @@ export default abstract class BasePage {
    */
   public async selectDropdown(label: string, value: string) {
     await this.getLabelledElement(label).click();
-    await this.page.getByRole("option", { name: value, exact: true }).click();
+    await this.page
+      .getByRole("option", { name: value, exact: true })
+      .click({ timeout: 10000 });
+  }
+
+  public async getAllOptions(filterName: string) {
+    const element = this.getLabelledElement(filterName);
+    await element.click();
+    return (
+      await Promise.all(
+        (
+          await element.getByRole("option").all()
+        ).map((item) => item.innerText())
+      )
+    ).filter((item) => item != "-- Select --");
   }
 }

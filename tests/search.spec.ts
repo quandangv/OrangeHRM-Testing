@@ -9,8 +9,9 @@ import APIHelper from "../helpers/APIHelper";
 
 // Test searching for candidates using filters
 test.describe("candidate search", () => {
-  test("job title", async ({ candidateSearch, jobTitles }) => {
-    await testSearching(
+  test("job title", async ({ candidateSearch, apiHelper }) => {
+    const jobTitles = await apiHelper.getJobTitles();
+    await testNoResult(
       candidateSearch,
       () => ({ jobTitle: Randomizer.choose(jobTitles).title }),
       2
@@ -25,7 +26,7 @@ test.describe("candidate search", () => {
   });
 
   test("vacancy", async ({ candidateSearch, vacancies }) => {
-    await testSearching(
+    await testNoResult(
       candidateSearch,
       () => ({ vacancy: Randomizer.choose(vacancies).name }),
       2
@@ -38,7 +39,8 @@ test.describe("candidate search", () => {
   });
 
   // This test fails due to the bug: The middle names of hiring managers are not shown in the filter options
-  test("hiring manager", async ({ candidateSearch, hiringManagers }) => {
+  test("hiring manager", async ({ candidateSearch, apiHelper }) => {
+    const hiringManagers = await apiHelper.getHiringManagers();
     await testSearching(
       candidateSearch,
       () => ({
@@ -57,8 +59,9 @@ test.describe("candidate search", () => {
     );
   });
 
-  test("status", async ({ candidateSearch, statuses }) => {
-    await testSearching(
+  test("status", async ({ candidateSearch, apiHelper }) => {
+    const statuses = await apiHelper.getStatuses();
+    await testNoResult(
       candidateSearch,
       () => ({
         status: Randomizer.choose(statuses).label,
@@ -112,7 +115,7 @@ test.describe("candidate search", () => {
   // This test fails due to the bug: can not search candidates by keywords if the keywords are not in the exact order, "javascript,css" doesn't match "css,javascript"
   test("keyword", async ({ candidateSearch }) => {
     // Search a non-matching keyword
-    await testSearching(
+    await testNoResult(
       candidateSearch,
       () => ({ keywords: [Randomizer.str(8)] }),
       2
@@ -174,6 +177,65 @@ test.describe("candidate search", () => {
   });
 });
 
+// Verify that all options in the filter dropdowns are valid
+test.describe("filter options", () => {
+  test("job title", async ({ candidateSearch, apiHelper }) => {
+    const items = await apiHelper.getJobTitles();
+    const options = await candidateSearch.getAllOptions("Job Title");
+    const names = items.map((item) => item.title);
+    for (const option of options) expect(names).toContain(option);
+    for (const item of candidateSearch.items)
+      expect(options).toContain(item["Job Title"]);
+  });
+  test("vacancy", async ({ candidateSearch, apiHelper }) => {
+    const items = await apiHelper.getVacancies();
+    const options = await candidateSearch.getAllOptions("Vacancy");
+    const names = items.map((item) => item.name);
+    for (const option of options) expect(names).toContain(option);
+    for (const item of candidateSearch.items)
+      expect(options).toContain(item["Vacancy"]);
+  });
+  test("hiring manager", async ({ candidateSearch, apiHelper }) => {
+    const items = await apiHelper.getHiringManagers();
+    const options = await candidateSearch.getAllOptions("Hiring Manager");
+    const names = items.map((item) => APIHelper.getName(item));
+    for (const option of options) expect(names).toContain(option);
+    for (const item of candidateSearch.items)
+      expect(options).toContain(item["Hiring Manager"]);
+  });
+  test("status", async ({ candidateSearch, apiHelper }) => {
+    const items = await apiHelper.getStatuses();
+    const options = await candidateSearch.getAllOptions("Status");
+    const names = items.map((item) => item.label);
+    for (const option of options) expect(names).toContain(option);
+    for (const item of candidateSearch.items)
+      expect(options).toContain(item["Status"]);
+  });
+});
+
+/**
+ * Test a filter where no result is returned
+ * @param candidateSearch The page object to control the UI
+ * @param getFilter A lambda that will be called to get a new filter. This fitler will be created repeatedly until it has no result
+ * @param count The number of times to repeat the test
+ */
+async function testNoResult(
+  candidateSearch: CandidateSearchPage,
+  getFilter: () => CandidateFilter,
+  count: number
+) {
+  for (let i = 0; i < count; i++) {
+    let filter = getFilter();
+    while (candidateSearch.filterLocally(filter).length > 0)
+      filter = getFilter();
+    await expect(candidateSearch.makeSearch(filter)).resolves.not.toThrow();
+    const searchResults = await candidateSearch.getSearchResults();
+    expect(candidateSearch.clearOtherItems(searchResults), {
+      message: "search condition: " + JSON.stringify(filter),
+    }).toHaveLength(0);
+  }
+}
+
 /**
  * Repeatedly test a candidate filter scheme a number of times
  * @param candidateSearch The page object to control the UI
@@ -187,16 +249,11 @@ async function testSearching(
 ) {
   for (let i = 0; i < count; i++) {
     const filter = getFilter();
-    const searchResults = await candidateSearch.makeSearch(filter);
+    await expect(candidateSearch.makeSearch(filter)).resolves.not.toThrow();
+    const searchResults = await candidateSearch.getSearchResults();
     expect(
-      CandidateSearchPage.makeTable(
-        candidateSearch.clearOtherItems(searchResults)
-      ),
+      candidateSearch.makeTable(candidateSearch.clearOtherItems(searchResults)),
       { message: "search condition: " + JSON.stringify(filter) }
-    ).toBe(
-      CandidateSearchPage.makeTable(candidateSearch.filterLocally(filter))
-    );
+    ).toBe(candidateSearch.makeTable(candidateSearch.filterLocally(filter)));
   }
 }
-
-function expectResult(expected: any[], actual: any[], message?: string) {}
