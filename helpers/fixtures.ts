@@ -1,9 +1,9 @@
 import { test as base, expect } from "@playwright/test";
-import LoginPage from "./loginPage";
-import DashboardPage from "./dashboardPage";
-import CandidateSearchPage from "./candidateSearchPage";
-import APIHelper from "../helpers/apiHelper";
-import Randomizer from "../helpers/randomizer";
+import LoginPage from "../pages/loginPage";
+import DashboardPage from "../pages/dashboardPage";
+import CandidateSearchPage from "../pages/candidateSearchPage";
+import APIHelper from "./apiHelper";
+import Randomizer from "./randomizer";
 import { VacancyDetails } from "../models/vacancy";
 import { CandidateDetails, CandidateStatus } from "../models/candidate";
 import config from "../playwright.config";

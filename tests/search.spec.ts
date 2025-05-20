@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test } from "../pages/fixtures";
+import { test } from "../helpers/fixtures";
 import Randomizer from "../helpers/randomizer";
 import CandidateSearchPage, {
   CandidateFilter,
