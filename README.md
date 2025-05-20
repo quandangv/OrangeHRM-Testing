@@ -21,3 +21,5 @@ Since some features require setup before being tested, like the candidate search
 To install dependencies, run `npm install` and `npx playwright install --with-deps`
 
 Afterward, run `npx playwright test` to run all scripts in the `tests` folder. To run a specific script, execute `npx playwright test <script.spec.ts>`. Other configurations can be set in `playwright.config.ts`
+
+After the tests are complete, the `playwright-report` folder contains the report files and video recordings. The HTML report can be viewed by running `npx playwright show-report`
