@@ -3,7 +3,6 @@ import { test } from "../helpers/fixtures";
 import Randomizer from "../helpers/randomizer";
 import CandidateSearchPage, {
   CandidateFilter,
-  CandidateTags,
 } from "../pages/candidateSearchPage";
 import APIHelper from "../helpers/apiHelper";
 

@@ -22,9 +22,10 @@ export default abstract class RestrictedPage extends BasePage {
    */
   protected async loginAndGoto(URL: string, user: string) {
     await this.page.goto(URL);
-    if (!this.page.url().endsWith("/web/index.php/auth/login")) return;
-    const loginPage = new LoginPage(this);
-    await loginPage.login(user);
-    await this.page.goto(URL);
+    while (this.page.url().endsWith("/web/index.php/auth/login")) {
+      const loginPage = new LoginPage(this);
+      await loginPage.login(user);
+      await this.page.goto(URL);
+    }
   }
 }

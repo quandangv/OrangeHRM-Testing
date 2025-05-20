@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import { expect, Page } from "@playwright/test";
 import BasePage from "../pages/basePage";
 import {
   CandidateCreationData,
@@ -30,34 +30,47 @@ export default class APIHelper {
     this.baseURL = baseURL;
   }
 
-  public async setLocalization(language: string, dateFormat: string) {
+  public async configure(url: string, data: any) {
     const response = await this.page.evaluate(
-      async ({ baseURL, language, dateFormat }) => {
-        const response = await fetch(
-          baseURL + "/web/index.php/api/v2/admin/localization",
-          {
-            method: "PUT",
-            body: `{"language":"${language}","dateFormat":"${dateFormat}"}`,
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-          }
-        );
+      async ({ url, data }) => {
+        const response = await fetch(url, {
+          method: "PUT",
+          body: JSON.stringify(data),
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        });
         return await response.json();
       },
-      { baseURL: this.baseURL, language, dateFormat }
+      { url: this.baseURL + url, data }
     );
-    if (
-      response.data == null ||
-      response.data.language != language ||
-      response.data.dateFormat != dateFormat
-    )
-      throw Error(
-        "Set localization failed. Received response: " +
-          JSON.stringify(response)
-      );
+    expect(response).toMatchObject({ data, meta: [], rels: [] });
   }
+
+  public async setLocalization(language: string, dateFormat: string) {
+    return this.configure("/web/index.php/api/v2/admin/localization", {
+      language,
+      dateFormat,
+    });
+  }
+
+  public async enableAllModules() {
+    return this.configure("/web/index.php/api/v2/admin/modules", {
+      admin: true,
+      pim: true,
+      leave: true,
+      time: true,
+      recruitment: true,
+      performance: true,
+      maintenance: true,
+      mobile: true,
+      directory: true,
+      claim: true,
+      buzz: true,
+    });
+  }
+
   public async get(url: string) {
     return this.page.evaluate(async (url) => {
       const response = await fetch(url, { method: "GET" });
@@ -104,7 +117,7 @@ export default class APIHelper {
   }
 
   public async create(path: string, data: unknown): Promise<any> {
-    return this.page.evaluate(
+    const response = await this.page.evaluate(
       async ([path, data]) => {
         const response = await fetch(path, {
           method: "POST",
@@ -114,10 +127,13 @@ export default class APIHelper {
             "Content-Type": "application/json",
           },
         });
+        if (response.status > 399) return { error: response.status };
         return await response.json();
       },
       [this.baseURL + path, data] as [string, unknown]
     );
+    expect(response.error).toBeUndefined();
+    return response;
   }
 
   public async createJobTitle(

@@ -1,5 +1,7 @@
+import { Page } from "@playwright/test";
 import APIHelper from "../helpers/apiHelper";
 import { CandidateCreationData, CandidateDetails } from "../models/candidate";
+import BasePage from "./basePage";
 import RestrictedPage from "./restrictedPage";
 
 /** The candidate data model whose fields match the corresponding names of columns in the search results */
@@ -47,8 +49,13 @@ export interface CandidateFilter {
 
 export default class CandidateSearchPage extends RestrictedPage {
   /** The candidates created for testing */
-  public items: CandidateTags[] = [];
+  public items: CandidateTags[];
   private headings: string[] = [];
+
+  constructor(page: Page | BasePage, candidates: CandidateDetails[]) {
+    super(page);
+    this.items = candidates.map((item) => new CandidateTags(item));
+  }
 
   public get identifier() {
     return this.page.getByRole("heading", { name: "Candidates", exact: true });
@@ -57,10 +64,6 @@ export default class CandidateSearchPage extends RestrictedPage {
   public async goto(user = "Admin") {
     await this.loginAndGoto("/web/index.php/recruitment/viewCandidates", user);
     await this.waitForRecords();
-  }
-
-  public setItems(candidates: CandidateDetails[]) {
-    this.items = candidates.map((item) => new CandidateTags(item));
   }
 
   public async waitForRecords() {
@@ -73,6 +76,7 @@ export default class CandidateSearchPage extends RestrictedPage {
 
   /** Perform actions on the UI to search candidates and read the search results to an array of partial CandidateTags */
   public async makeSearch(filters: CandidateFilter) {
+    await this.goto();
     if (filters.jobTitle != null)
       await this.selectDropdown("Job Title", filters.jobTitle);
     if (filters.vacancy != null)
