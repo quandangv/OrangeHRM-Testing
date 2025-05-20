@@ -1,4 +1,4 @@
-import { VacancyDetails } from "./Vacancy";
+import { VacancyDetails } from "./vacancy";
 
 /** The data model for candidates that matches the format of the create candidate request */
 export interface CandidateCreationData {

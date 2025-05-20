@@ -1,4 +1,4 @@
-import RestrictedPage from "./RestrictedPage";
+import RestrictedPage from "./restrictedPage";
 
 export default class DashboardPage extends RestrictedPage {
   public get identifier() {

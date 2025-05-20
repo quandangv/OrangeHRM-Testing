@@ -1,6 +1,6 @@
-import APIHelper from "../helpers/APIHelper";
-import { CandidateCreationData, CandidateDetails } from "../models/Candidate";
-import RestrictedPage from "./RestrictedPage";
+import APIHelper from "../helpers/apiHelper";
+import { CandidateCreationData, CandidateDetails } from "../models/candidate";
+import RestrictedPage from "./restrictedPage";
 
 /** The candidate data model whose fields match the corresponding names of columns in the search results */
 export class CandidateTags {

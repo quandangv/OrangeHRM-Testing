@@ -1,11 +1,11 @@
 import { expect } from "@playwright/test";
 import { test } from "../pages/fixtures";
-import Randomizer from "../helpers/Randomizer";
+import Randomizer from "../helpers/randomizer";
 import CandidateSearchPage, {
   CandidateFilter,
   CandidateTags,
-} from "../pages/CandidateSearchPage";
-import APIHelper from "../helpers/APIHelper";
+} from "../pages/candidateSearchPage";
+import APIHelper from "../helpers/apiHelper";
 
 // Test searching for candidates using filters
 test.describe("candidate search", () => {

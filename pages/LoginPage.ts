@@ -1,4 +1,4 @@
-import BasePage from "./BasePage";
+import BasePage from "./basePage";
 
 export default class LoginPage extends BasePage {
   public static credentials: Record<string, string> = {

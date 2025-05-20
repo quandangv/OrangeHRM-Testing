@@ -1,7 +1,7 @@
 import { Locator, Page } from "@playwright/test";
-import BasePage from "./BasePage";
-import LoginPage from "./LoginPage";
-import { CandidateCreationData } from "../models/Candidate";
+import BasePage from "./basePage";
+import LoginPage from "./loginPage";
+import { CandidateCreationData } from "../models/candidate";
 
 export default abstract class RestrictedPage extends BasePage {
   public get profileImage() {

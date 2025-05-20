@@ -1,11 +1,11 @@
 import { test as base, expect } from "@playwright/test";
-import LoginPage from "./LoginPage";
-import DashboardPage from "./DashboardPage";
-import CandidateSearchPage from "./CandidateSearchPage";
-import APIHelper from "../helpers/APIHelper";
-import Randomizer from "../helpers/Randomizer";
-import { VacancyDetails } from "../models/Vacancy";
-import { CandidateDetails, CandidateStatus } from "../models/Candidate";
+import LoginPage from "./loginPage";
+import DashboardPage from "./dashboardPage";
+import CandidateSearchPage from "./candidateSearchPage";
+import APIHelper from "../helpers/apiHelper";
+import Randomizer from "../helpers/randomizer";
+import { VacancyDetails } from "../models/vacancy";
+import { CandidateDetails, CandidateStatus } from "../models/candidate";
 import config from "../playwright.config";
 
 export const test = base.extend<

@@ -1,21 +1,21 @@
 import { Page } from "@playwright/test";
-import BasePage from "../pages/BasePage";
+import BasePage from "../pages/basePage";
 import {
   CandidateCreationData,
   CandidateCreationResults,
   CandidateStatus,
-} from "../models/Candidate";
+} from "../models/candidate";
 import {
   VacancyCreationData,
   VacancyCreationResults,
   VacancyItem,
-} from "../models/Vacancy";
+} from "../models/vacancy";
 import {
   JobTitleCreationData,
   JobTitleCreationResults,
   JobTitleItem,
-} from "../models/JobTitle";
-import { EmployeeItem } from "../models/Employee";
+} from "../models/jobTitle";
+import { EmployeeItem } from "../models/employee";
 
 export type DataPromise<T> = Promise<{ data: T; meta: any[]; rels: any[] }>;
 
